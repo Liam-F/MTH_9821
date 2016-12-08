@@ -47,6 +47,13 @@ def Trinomial_Tree_Pricing(Op, TMT, Greek = False):
                     fv[i] = max(np.exp(-r * dt) * (p_u * fv[i] + p_m * fv[i + 1] + p_d * fv[i + 2]), Sc - K)
                 elif Op.cp == 'P':
                     fv[i] = max(np.exp(-r * dt) * (p_u * fv[i] + p_m * fv[i + 1] + p_d * fv[i + 2]), K - Sc)
+            elif Op.ae == 'DNO': #Down and Out options
+                B = Op.Barrier
+                Sc = S0 * u ** (j - i)
+                if Op.cp == 'C':
+                    fv[i] = np.exp(-r * dt) * (p_u * fv[i] + p_m * fv[i + 1] + p_d * fv[i + 2]) * int(Sc > B)
+                elif Op.cp == 'P':
+                    fv[i] = np.exp(-r * dt) * (p_u * fv[i] + p_m * fv[i + 1] + p_d * fv[i + 2]) * int(Sc > B)
         if j == 2:
             fv2 = [float(fv[0]), float(fv[1]), float(fv[2]), float(fv[3]), float(fv[4])]
             fs2 = [S0 * u ** 2, S0 * u, S0, S0 * d, S0 * d ** 2]

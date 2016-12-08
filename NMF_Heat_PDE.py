@@ -22,6 +22,7 @@ def PDE_Forward_Euler(x_left, x_right, tau_final, f, g_left, g_right, M, N):
     dx = (x_right - x_left) / N
     dtau = tau_final / M
     alpha = dtau / (dx ** 2)
+    # print alpha
     x = np.linspace(x_left, x_right, N+1)
     tau = np.linspace(0, tau_final, M+1)
     u_approx = np.zeros([M+1, N+1])

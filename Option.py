@@ -1,9 +1,8 @@
 from __future__ import division
 import numpy as np
 
-
 class Option:
-    def __init__(self, S0, K, T, q, sigma, cp, ae, r=0.02):
+    def __init__(self, S0, K, T, q, sigma, cp, ae):
         self.spot = S0 # Spot price of UA
         self.strike = K # Strike of the option
         self.maturity = T # Maturity of the option
@@ -11,9 +10,6 @@ class Option:
         self.vol = sigma # volatility of the stock
         self.cp = cp # 'C' for call and 'P' for put
         self.ae = ae # 'AM' for american and 'EU' for european
-        self.a = (r - q) / sigma ** 2 - 1 / 2
-        self.b = ((r - q) / sigma ** 2 + 1 / 2) ** 2 + 2 * q / sigma ** 2
-
     def value(self, S):
         '''
         Return the value of an option when the stocck is at price S
@@ -60,12 +56,3 @@ class Option:
             fs[i] = fs[i - 1] / u
             fv[i] = self.value(fs[i])
         return fv
-
-    def f(x):
-        return K * np.exp(a * x) * (1 - np.exp(x)) * int(x < 0)
-
-    def g_left(tau):
-        return K * np.exp(a * x_left + b * tau) * (np.exp(- 2 * r * tau / sigma ** 2) - np.exp(x_left - 2 * q * tau / sigma ** 2))
-
-    def g_right(tau):
-        return 0

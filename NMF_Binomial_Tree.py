@@ -43,6 +43,13 @@ def Binomial_Tree_Pricing(Op, BMT, Greek = False):
                     fv[i] = max(np.exp(-r * dt) * (p * fv[i] + (1 - p) * fv[i + 1]), Sc - K)
                 elif Op.cp == 'P':
                     fv[i] = max(np.exp(-r * dt) * (p * fv[i] + (1 - p) * fv[i + 1]), K - Sc)
+            elif Op.ae == 'DNO': #Down and Out options
+                B = Op.Barrier
+                Sc = S0 * u ** (j - i) * d ** i
+                if Op.cp == 'C':
+                    fv[i] = np.exp(-r * dt) * (p * fv[i] + (1 - p) * fv[i + 1]) * int(Sc > B)
+                elif Op.cp == 'P':
+                    fv[i] = np.exp(-r * dt) * (p * fv[i] + (1 - p) * fv[i + 1]) * int(Sc > B)
         if j == 2:
             fv2 = [float(fv[0]), float(fv[1]), float(fv[2])]
             fs2 = [S0 * u ** 2, S0 * u * d, S0 * d ** 2]
