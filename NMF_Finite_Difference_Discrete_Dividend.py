@@ -3,6 +3,7 @@ from Option import *
 from NMF_Binomial_Tree import *
 import NMF_Heat_PDE as pde
 import Finite_Difference_Pricer as fd
+np.set_printoptions(linewidth=500)
 
 class Option_Dis_Div(Option):
     def __init__(self, S0, K, T, sigma, cp, ae, div_dict):
@@ -30,16 +31,6 @@ def finite_diff_discrete_div(opt_div, r, M_1=16, PDE_Solver="Crank_Nicolson", Li
     x_left_temp, x_right_temp, tau_final, tau_div, d = Discretization_div(opt_div, r)
     x_compute = np.log(S0/K) + np.log(1 - d)
 
-    # First solve the PDE from tau = 0 to tau_div
-    def f(x):
-        return K * np.exp(a * x) * (np.exp(x) - 1) * int(x > 0)
-
-    def g_left(tau):
-        return 0
-
-    def g_right(tau):
-        return K * np.exp(a * x_right + b * tau) * (- np.exp(2 * r * tau / sigma ** 2) + np.exp(x_right - 2 * q * tau / sigma ** 2))
-
     alpha_1 = 0.4
     if PDE_Solver == "Crank_Nicolson":
         alpha_1 = 4
@@ -53,6 +44,16 @@ def finite_diff_discrete_div(opt_div, r, M_1=16, PDE_Solver="Crank_Nicolson", Li
     x_left = x_compute - N_left * dx
     x_right = x_compute + N_right * dx
 
+    # First solve the PDE from tau = 0 to tau_div
+    def f(x):
+        return K * np.exp(a * x) * (np.exp(x) - 1) * int(x > 0)
+
+    def g_left(tau):
+        return 0
+
+    def g_right(tau):
+        return K * np.exp(a * x_right + b * tau) * (- np.exp(- 2 * r * tau / sigma ** 2) + np.exp(x_right - 2 * q * tau / sigma ** 2))
+
     if PDE_Solver == 'Forward_Euler':
         u_approx_grid, x_knot, tau_knot = pde.PDE_Forward_Euler(x_left, x_right, tau_div, f, g_left, g_right, M_1, N)
     elif PDE_Solver == "Backward_Euler":
@@ -65,7 +66,7 @@ def finite_diff_discrete_div(opt_div, r, M_1=16, PDE_Solver="Crank_Nicolson", Li
             u_approx_grid, x_knot, tau_knot = pde.PDE_Crank_Nicolson(x_left, x_right, tau_div, f, g_left, g_right, M_1, N, solver='SOR')
         elif Linear_Solver == 'LU':
             u_approx_grid, x_knot, tau_knot = pde.PDE_Crank_Nicolson(x_left, x_right, tau_div, f, g_left, g_right, M_1, N, solver='LU')
-    print u_approx_grid
+    # print u_approx_grid
     u_approx_plus = u_approx_grid[-1, :] # This gives the boundry condition for tau_div -> tau_final
 
     # Then solve the PDE for the rest part of the domain
@@ -92,7 +93,7 @@ def finite_diff_discrete_div(opt_div, r, M_1=16, PDE_Solver="Crank_Nicolson", Li
         return 0
 
     def g_right(tau):
-        return K * np.exp(a * x_right + b * tau) * (- np.exp(2 * r * tau / sigma ** 2) + np.exp(x_right - 2 * q * tau / sigma ** 2))
+            return K * np.exp(a * x_right + b * (tau + tau_div)) * (- np.exp(- 2 * r * (tau + tau_div) / sigma ** 2) + np.exp(x_right - 2 * q * (tau + tau_div) / sigma ** 2))
 
     if PDE_Solver == 'Forward_Euler':
         u_approx_grid, x_knot, tau_knot = pde.PDE_Forward_Euler(x_left, x_right, tau_final - tau_div, f_2, g_left, g_right, M_2, N)
@@ -106,15 +107,16 @@ def finite_diff_discrete_div(opt_div, r, M_1=16, PDE_Solver="Crank_Nicolson", Li
             u_approx_grid, x_knot, tau_knot = pde.PDE_Crank_Nicolson(x_left, x_right, tau_final - tau_div, f_2, g_left, g_right, M_2, N, solver='SOR')
         elif Linear_Solver == 'LU':
             u_approx_grid, x_knot, tau_knot = pde.PDE_Crank_Nicolson(x_left, x_right, tau_final - tau_div, f_2, g_left, g_right, M_2, N, solver='LU')
-    print u_approx_grid
+    tau_knot += tau_div
+    # print u_approx_grid
     u_approx = u_approx_grid[-1, :]
 
     def linear_interp_1(S0, K):
         x_compute = np.log(S0 / K)
         dx = (x_right - x_left) / N
         i = int(np.floor((x_compute - x_left) / dx))
-        x_lo = x_knot[i]
-        x_hi = x_knot[i + 1]
+        x_lo = x_compute - dx
+        x_hi = x_compute + dx
         S_lo = K * np.exp(x_lo)
         S_hi = K * np.exp(x_hi)
         V_lo = np.exp(-a * x_lo - b * tau_final) * u_approx[i]
@@ -134,7 +136,8 @@ def finite_diff_discrete_div(opt_div, r, M_1=16, PDE_Solver="Crank_Nicolson", Li
 
     # V_FD = linear_interp_1(S0, K)
     u_compute = u_approx[int(N_left)]
-    V_FD = np.exp(-a * x_compute - b * tau_final) * u_compute
+    x_mid = x_compute - np.log(1 - d)
+    V_FD = np.exp(-a * x_mid - b * tau_final) * u_compute
     if not Greek:
         return V_FD
     else:
@@ -142,29 +145,30 @@ def finite_diff_discrete_div(opt_div, r, M_1=16, PDE_Solver="Crank_Nicolson", Li
         # dx = (x_right - x_left) / N
         # i = int(np.floor((x_compute - x_left) / dx))
         i = int(N_left)
-        x_lo = x_knot[i - 1]
-        x_hi = x_knot[i + 1]
+        x_lo = x_mid - dx
+        x_hi = x_mid + dx
         S_lo = K * np.exp(x_lo)
         S_hi = K * np.exp(x_hi)
 
-        V_lo = np.exp(-a * x_lo - b * tau_final) * u_approx[i - 1]
-        V_hi = np.exp(-a * x_hi - b * tau_final) * u_approx[i + 1]
+        V_lo = np.exp(-a * x_lo - b * tau_final) * u_approx[int(N_left - 1)]
+        V_hi = np.exp(-a * x_hi - b * tau_final) * u_approx[int(N_left + 1)]
         Delta = (V_hi - V_lo) / (S_hi - S_lo) # Delta Central
 
-        Gamma = ((S0- S_lo) * V_hi - (S_hi - S_lo) * V_FD + (S_hi - S0) * V_lo) / ((S0 - S_lo) * (S_hi - S0) * (S_hi - S_lo) / 2) # Gamma Central
+        Gamma = ((S0 - S_lo) * V_hi - (S_hi - S_lo) * V_FD + (S_hi - S0) * V_lo) / ((S0 - S_lo) * (S_hi - S0) * (S_hi - S_lo) / 2) # Gamma Central
 
         d_tau = tau_knot[-1] - tau_knot[-2]
         dt = - 2 * d_tau / sigma ** 2
-        V_FD_pre = np.exp(-a * x_lo - b * (tau_final - d_tau)) * u_approx_grid[-2, i]
+        V_FD_pre = np.exp(-a * x_mid - b * (tau_final - d_tau)) * u_approx_grid[-2, int(N_left)]
         Theta = (V_FD - V_FD_pre) / dt
-        # print u_compute, V_FD, Delta, Gamma, Theta
+        print u_compute, V_FD, Delta, Gamma, Theta
         return V_FD, Delta, Gamma, Theta
 
 if __name__ == "__main__":
     div_dict = {5/12: 0.02}
     euc = Option_Dis_Div(S0=52, K=50, T=1, sigma=0.3, cp='C', ae='EU', div_dict=div_dict)
     r = 0.03
-    # for M_1 in [4, 16, 64, 256]:
-    for M_1 in [4]:
+    for M_1 in [4, 16, 64, 256]:
+    # for M_1 in [4]:
     #     finite_diff_discrete_div(euc, r, M_1, PDE_Solver='Forward_Euler', Greek=True)
-        finite_diff_discrete_div(euc, r, M_1, PDE_Solver='Forward_Euler', Greek=True)
+    #     finite_diff_discrete_div(euc, r, M_1, PDE_Solver='Forward_Euler', Greek=True)
+        finite_diff_discrete_div(euc, r, M_1, Greek=True)

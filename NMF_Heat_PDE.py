@@ -31,7 +31,7 @@ def PDE_Forward_Euler(x_left, x_right, tau_final, f, g_left, g_right, M, N):
     for c in xrange(N+1):
         u_approx[0, c] = f(x[c])
     u_approx[:, 0] = np.apply_along_axis(g_left, 0, tau)
-    u_approx[:, N] = np.apply_along_axis(g_right, 0, tau)
+    u_approx[1:, N] = np.apply_along_axis(g_right, 0, tau[1:])
 
     # Execute Forward Euler
     for m in xrange(1, M+1):
@@ -117,7 +117,7 @@ def PDE_Crank_Nicolson(x_left, x_right, tau_final, f, g_left, g_right, M, N, sol
     for c in xrange(N+1):
         u_approx[0, c] = f(x[c])
     u_approx[:, 0] = np.apply_along_axis(g_left, 0, tau)
-    u_approx[:, N] = np.apply_along_axis(g_right, 0, tau)
+    u_approx[1:, N] = np.apply_along_axis(g_right, 0, tau[1:])
 
     # Execute Crank Nicolson
     # Initialize the tri-diagonal matrix A
