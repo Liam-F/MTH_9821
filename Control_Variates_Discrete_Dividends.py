@@ -19,7 +19,7 @@ if __name__ == "__main__":
     eup = Option_Dis_Div(S0, K, T, sigma, cp='P', ae='EU', div_dict=div_dict)
     V_BS = BS.Black_Scholes_Pricing(eup, r)
     print V_BS
-    N_lst = [4 * 2 ** i * 10000 for i in range(9)]
+    N_lst = [4 * 2 ** i * 10000 for i in range(4)]
     # N_lst = [160000]
     Z = rnd.std_normal_Box_Muller(N_lst[-1])
     t = sorted(div_dict.keys())
@@ -35,14 +35,15 @@ if __name__ == "__main__":
         V_MC = np.mean(V)
 
         # Control Variate stock value and Option value
-        S_tilde = [S0 * np.exp((r - q - sigma ** 2)* T + sigma * (np.sqrt(t[0]) * z[i * 4] + np.sqrt(t[1] - t[0]) * z[i * 4 + 1] + np.sqrt(t[2] - t[1]) * z[i * 4 + 2] + np.sqrt(T - t[2]) * z[i * 4 + 3])) for i in xrange(n)]
+        S_tilde = [S0 * np.exp((r - q - sigma ** 2 / 2)* T + sigma * (np.sqrt(t[0]) * z[i * 4] + np.sqrt(t[1] - t[0]) * z[i * 4 + 1] + np.sqrt(t[2] - t[1]) * z[i * 4 + 2] + np.sqrt(T - t[2]) * z[i * 4 + 3])) for i in xrange(n)]
         V_tilde = [np.exp(-r * T) * max(- Si + K, 0) for Si in S_tilde]
         V_tilde_mean = np.mean(V_tilde)
 
         # Control Variate Technique
         dif_tilde = [V_t - V_tilde_mean for V_t in V_tilde]
-        dif = [V[i] - V_tilde[i] for i in xrange(len(V))]
+        dif = [V_i - V_MC for V_i in V]
         b = sum([dif[i] * dif_tilde[i] for i in xrange(len(dif))]) / sum([d ** 2 for d in dif_tilde])
+        print b, V_tilde_mean
         W = [V[i] - b * (V_tilde[i] - V_BS) for i in xrange(len(V))]
         V_CV = np.mean(W)
         Delta_vec = [-int(S[i] < K) * np.exp(-r * T) * S_tilde[i] * 0.99 / S0 for i in xrange(len(S))]
