@@ -30,7 +30,7 @@ class BinomialTree:
         fs = np.zeros([N + 1, 1])
         fs[0] = u ** N * Op.spot
         fv[0] = Op.value(fs[0])
-        for i in range(1, N + 1):
+        for i in xrange(1, N + 1):
             fs[i] = fs[i - 1] * d / u
             fv[i] = Op.value(fs[i])
         return fv    
@@ -48,8 +48,8 @@ def Binomial_Tree_Pricing(Op, BMT, Greek = False):
     dt = T / N
     # p = (np.exp((r - q) * dt) - d) / (u - d) # risk neutral probability for the stock price to go up
     fv = BMT.finalvalue(Op)
-    for j in range(N - 1, -1, -1):
-        for i in range(0, j + 1):
+    for j in xrange(N - 1, -1, -1):
+        for i in xrange(0, j + 1):
             if Op.ae == 'EU':
                 fv[i] = np.exp(-r * dt) * (p * fv[i] + (1 - p) * fv[i + 1])
             elif Op.ae == 'AM':
@@ -114,7 +114,7 @@ def Binomial_Black_Scholes(Op, BMT, Greek = False):
     Op.maturity = dt
     Op.spot = u ** (N - 1) * S0
     fv[0] = Black_Scholes_Pricing(Op, r)
-    for i in range(1, N):
+    for i in xrange(1, N):
         Op.spot *= d / u
         if Op.ae == 'EU':
             fv[i] = Black_Scholes_Pricing(Op, r)
@@ -124,8 +124,8 @@ def Binomial_Black_Scholes(Op, BMT, Greek = False):
             elif Op.cp == 'P':
                 fv[i] = max(Black_Scholes_Pricing(Op, r), K - Op.spot)
     # print fv
-    for j in range(N - 2, -1, -1):
-        for i in range(0, j + 1):
+    for j in xrange(N - 2, -1, -1):
+        for i in xrange(0, j + 1):
             if Op.ae == 'EU':
                 fv[i] = np.exp(-r * dt) * (p * fv[i] + (1 - p) * fv[i + 1])
             if Op.ae == 'AM':
