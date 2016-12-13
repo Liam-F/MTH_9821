@@ -39,6 +39,46 @@ def PDE_Forward_Euler(x_left, x_right, tau_final, f, g_left, g_right, M, N):
             u_approx[m, n] = alpha * u_approx[m-1, n-1] - (2*alpha - 1) * u_approx[m-1, n] + alpha * u_approx[m-1, n+1]
     return u_approx, x, tau
 
+def PDE_Forward_Euler_Amer(x_left, x_right, tau_final, f, g_left, g_right, M, N, opt, r):
+    '''
+    Forward Euler solution for heat pde u_tau = u_xx, with the American early exercise premium
+    :param x0: the point of interest
+    :param x_left: left boundary of the interval
+    :param x_right: right boundary of the interval
+    :param tau_final: upper boundary of the interval
+    :param f: lower boundary condition
+    :param g_left: left boundary condition
+    :param g_right: right boundary condition
+    :return: the discrete nodes x and solution at (x_i, tau_final) for each x_i in x
+    '''
+    # Discretization settings
+    dx = (x_right - x_left) / N
+    dtau = tau_final / M
+    alpha = dtau / (dx ** 2)
+    # print alpha
+    x = np.linspace(x_left, x_right, N+1)
+    tau = np.linspace(0, tau_final, M+1)
+    u_approx = np.zeros([M+1, N+1])
+    # Plug in boundary conditions
+    # u_approx[0, :] = np.apply_along_axis(f, 0, x)
+    for c in xrange(N+1):
+        u_approx[0, c] = f(x[c])
+    u_approx[:, 0] = np.apply_along_axis(g_left, 0, tau)
+    u_approx[1:, N] = np.apply_along_axis(g_right, 0, tau[1:])
+
+    # Execute Forward Euler
+    for m in xrange(1, M+1):
+        for n in xrange(1, N):
+            u_approx[m, n] = alpha * u_approx[m-1, n-1] - (2*alpha - 1) * u_approx[m-1, n] + alpha * u_approx[m-1, n+1]
+            S0, K, T, q, sigma = opt.spot, opt.strike, opt.maturity, opt.div_rate, opt.vol
+            a = (r - q) / sigma ** 2 - 1 / 2
+            b = ((r - q) / sigma ** 2 + 1 / 2) ** 2 + 2 * q / sigma ** 2
+            tau_m = m * dtau
+            x_n = x_left + n * dx
+            early_ex_premium = K * np.exp(a * x_n + b * tau_m) * max(1 - np.exp(x_n), 0)
+            u_approx[m, n] = max(u_approx[m, n], early_ex_premium)
+    return u_approx, x, tau
+
 
 def PDE_Backward_Euler(x_left, x_right, tau_final, f, g_left, g_right, M, N, solver='LU'):
     '''
@@ -151,7 +191,66 @@ def PDE_Crank_Nicolson(x_left, x_right, tau_final, f, g_left, g_right, M, N, sol
             b[-1] += (u_approx[m, -1] + u_approx[m - 1, -1]) * alpha / 2
 
             # u_approx[m, 1:N] = np.reshape(its.SOR_iter_banded(A, 2, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-6), omega=1.2), N - 1)
-            u_approx[m, 1:N] = np.reshape(its.SOR_iter(A, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-6), res_cri = 0, omega=1.2), N - 1)
+            u_approx[m, 1:N] = np.reshape(its.SOR_iter(A, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri = 0, omega=1.2), N - 1)
+    return u_approx, x, tau
+
+def PDE_Crank_Nicolson_Amer(x_left, x_right, tau_final, f, g_left, g_right, M, N, opt, r, solver='SOR'):
+    '''
+    Forward Euler solution for heat pde u_tau = u_xx
+    :param x_left: left boundary of the interval
+    :param x_right: right boundary of the interval
+    :param tau_final: upper boundary of the interval
+    :param f: lower boundary condition
+    :param g_left: left boundary condition
+    :param g_right: right boundary condition
+    :return: the discrete nodes x and solution at (x_i, tau_final) for each x_i in x
+    '''
+    S0, K, T, q, sigma = opt.spot, opt.strike, opt.maturity, opt.div_rate, opt.vol
+
+    # Discretization settings
+    dx = (x_right - x_left) / N
+    dtau = tau_final / M
+    alpha = dtau / (dx ** 2)
+    x = np.linspace(x_left, x_right, N+1)
+    tau = np.linspace(0, tau_final, M+1)
+    u_approx = np.zeros([M+1, N+1])
+    # Plug in boundary conditions
+    # u_approx[0, :] = np.apply_along_axis(f, 0, x)
+    for c in xrange(N+1):
+        u_approx[0, c] = f(x[c])
+    u_approx[:, 0] = np.apply_along_axis(g_left, 0, tau)
+    u_approx[1:, N] = np.apply_along_axis(g_right, 0, tau[1:])
+
+    # Execute Crank Nicolson
+    # Initialize the tri-diagonal matrix A
+    A = np.zeros([N-1, N-1])
+    A[0, 0], A[0, 1] = 1 + alpha, - alpha / 2
+    for i in xrange(1, N-2):
+        A[i, i - 1], A[i, i], A[i, i + 1] = -alpha / 2, 1 + alpha, -alpha / 2
+    A[N-2, N-3], A[N-2, N-2] = -alpha / 2, 1 + alpha
+    # Initialize tri-diagonal matrix B
+    B = np.zeros([N-1, N-1])
+    B[0, 0], B[0, 1] = 1 - alpha, alpha / 2
+    for i in xrange(1, N-2):
+        B[i, i-1], B[i, i], B[i, i+1] = alpha / 2, 1 - alpha, alpha / 2
+    B[N-2, N-3], B[N-2, N-2] = alpha / 2, 1 - alpha
+    #Projected SOR
+    if solver == 'SOR':
+        for m in xrange(1, M + 1):
+            b = np.dot(B, np.reshape(u_approx[m - 1, 1:N], (N - 1, 1)))
+            b[0] += (u_approx[m, 0] + u_approx[m - 1, 0]) * alpha / 2
+            b[-1] += (u_approx[m, -1] + u_approx[m - 1, -1]) * alpha / 2
+
+            # u_approx[m, 1:N] = np.reshape(its.SOR_iter_banded(A, 2, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-6), omega=1.2), N - 1)
+            u_approx[m, 1:N] = np.reshape(its.SOR_iter(A, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri = 0, omega=1.2), N - 1)
+            for n in xrange(N):
+                a = (r - q) / sigma ** 2 - 1 / 2
+                b = ((r - q) / sigma ** 2 + 1 / 2) ** 2 + 2 * q / sigma ** 2
+                tau_m = m * dtau
+                x_n = x_left + n * dx
+                early_ex_premium = K * np.exp(a * x_n + b * tau_m) * max(1 - np.exp(x_n), 0)
+                # print early_ex_premium
+                u_approx[m, n] = max(u_approx[m, n], early_ex_premium)
     return u_approx, x, tau
 
 
