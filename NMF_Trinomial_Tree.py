@@ -24,6 +24,20 @@ class TrinomialTree:
         self.p_m = 2/3
         self.p_d = 1 - self.p_u - self.p_m
 
+    def finalvalue_tri(self, Op):
+        '''
+        Generates the final state value of an option with a N step trinomial tree model
+        :return: a [2N + 1, 1] vector containing the final values
+        '''
+        N, u, d = self.tstep, self.u, self.d
+        fv = np.zeros([2 * N + 1, 1])
+        fs = np.zeros([2 * N + 1, 1])
+        fs[0] = u ** N * Op.spot
+        fv[0] = Op.value(fs[0])
+        for i in range(1, 2 * N + 1):
+            fs[i] = fs[i - 1] / u
+            fv[i] = Op.value(fs[i])
+        return fv
 
 def Trinomial_Tree_Pricing(Op, TMT, Greek = False):
     '''
@@ -36,7 +50,7 @@ def Trinomial_Tree_Pricing(Op, TMT, Greek = False):
     N, r, u, d = TMT.tstep, TMT.riskfree, TMT.u, TMT.d
     p_u, p_m, p_d = TMT.p_u, TMT.p_m, TMT.p_d,
     dt = T / N
-    fv = Op.finalvalue_tri(N, u, d)
+    fv = TMT.finalvalue_tri(Op)
     for j in range(N - 1, -1, -1):
         for i in range(0, 2 * j + 1):
             if Op.ae == 'EU':

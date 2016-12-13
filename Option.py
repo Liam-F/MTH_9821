@@ -10,6 +10,8 @@ class Option:
         self.vol = sigma # volatility of the stock
         self.cp = cp # 'C' for call and 'P' for put
         self.ae = ae # 'AM' for american and 'EU' for european
+
+        
     def value(self, S):
         '''
         Return the value of an option when the stocck is at price S
@@ -23,36 +25,36 @@ class Option:
             value = (self.strike - S) * int(S <= self.strike)
         return value
 
-    def finalvalue(self, N, u, d):
-        '''
-        Generates the final state value of an option with a N step binomial tree model
-        :param N: How many steps are there in the binomial tree
-        :param u: Binomial Tree parameter of stock price going up
-        :param d: Binomial Tree parameter of stock price going down
-        :return: a [N + 1, 1] vector containing the final values
-        '''
-        fv = np.zeros([N + 1, 1])
-        fs = np.zeros([N + 1, 1])
-        fs[0] = u ** N * self.spot
-        fv[0] = self.value(fs[0])
-        for i in range(1, N + 1):
-            fs[i] = fs[i - 1] * d / u
-            fv[i] = self.value(fs[i])
-        return fv
+    # def finalvalue(self, N, u, d):
+    #     '''
+    #     Generates the final state value of an option with a N step binomial tree model
+    #     :param N: How many steps are there in the binomial tree
+    #     :param u: Binomial Tree parameter of stock price going up
+    #     :param d: Binomial Tree parameter of stock price going down
+    #     :return: a [N + 1, 1] vector containing the final values
+    #     '''
+    #     fv = np.zeros([N + 1, 1])
+    #     fs = np.zeros([N + 1, 1])
+    #     fs[0] = u ** N * self.spot
+    #     fv[0] = self.value(fs[0])
+    #     for i in range(1, N + 1):
+    #         fs[i] = fs[i - 1] * d / u
+    #         fv[i] = self.value(fs[i])
+    #     return fv
 
-    def finalvalue_tri(self, N, u, d):
-        '''
-        Generates the final state value of an option with a N step trinomial tree model
-        :param N: How many steps are there in the binomial tree
-        :param u: Trinomial Tree parameter of stock price going up
-        :param d: Trinomial Tree parameter of stock price going down
-        :return: a [2N + 1, 1] vector containing the final values
-        '''
-        fv = np.zeros([2 * N + 1, 1])
-        fs = np.zeros([2 * N + 1, 1])
-        fs[0] = u ** N * self.spot
-        fv[0] = self.value(fs[0])
-        for i in range(1, 2 * N + 1):
-            fs[i] = fs[i - 1] / u
-            fv[i] = self.value(fs[i])
-        return fv
+    # def finalvalue_tri(self, N, u, d):
+    #     '''
+    #     Generates the final state value of an option with a N step trinomial tree model
+    #     :param N: How many steps are there in the binomial tree
+    #     :param u: Trinomial Tree parameter of stock price going up
+    #     :param d: Trinomial Tree parameter of stock price going down
+    #     :return: a [2N + 1, 1] vector containing the final values
+    #     '''
+    #     fv = np.zeros([2 * N + 1, 1])
+    #     fs = np.zeros([2 * N + 1, 1])
+    #     fs[0] = u ** N * self.spot
+    #     fv[0] = self.value(fs[0])
+    #     for i in range(1, 2 * N + 1):
+    #         fs[i] = fs[i - 1] / u
+    #         fv[i] = self.value(fs[i])
+    #     return fv

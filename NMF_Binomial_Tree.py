@@ -20,6 +20,21 @@ class BinomialTree:
         self.d = 1 / self.u
         self.p = (np.exp((r - Op.div_rate) * dt) - self.d) / (self.u - self.d)
 
+    def finalvalue(self, Op):
+        '''
+        Generates the final state value of an option with a N step binomial tree model
+        :return: a [N + 1, 1] vector containing the final values
+        '''
+        N, u, d = self.tstep, self.u, self.d
+        fv = np.zeros([N + 1, 1])
+        fs = np.zeros([N + 1, 1])
+        fs[0] = u ** N * Op.spot
+        fv[0] = Op.value(fs[0])
+        for i in range(1, N + 1):
+            fs[i] = fs[i - 1] * d / u
+            fv[i] = Op.value(fs[i])
+        return fv    
+
 
 def Binomial_Tree_Pricing(Op, BMT, Greek = False):
     '''
@@ -32,7 +47,7 @@ def Binomial_Tree_Pricing(Op, BMT, Greek = False):
     N, r, u, d, p = BMT.tstep, BMT.riskfree, BMT.u, BMT.d, BMT.p
     dt = T / N
     # p = (np.exp((r - q) * dt) - d) / (u - d) # risk neutral probability for the stock price to go up
-    fv = Op.finalvalue(N, u, d)
+    fv = BMT.finalvalue(Op)
     for j in range(N - 1, -1, -1):
         for i in range(0, j + 1):
             if Op.ae == 'EU':
@@ -172,13 +187,13 @@ if __name__ == "__main__":
     # print pavgeup
     # print pbbs
     # print pbbsr
-    #(peup, deltae, gammae, thetae) = Binomial_Tree_Pricing(eup, bmt, True)
-    #(pamp, deltaa, gammaa, thetaa) = Binomial_Tree_Pricing(amp, bmt, True)
-    #print [peup, deltae, gammae, thetae]
-    #print [pamp, deltaa, gammaa, thetaa]
+    (peup, deltae, gammae, thetae) = Binomial_Tree_Pricing(eup, bmt, True)
+    (pamp, deltaa, gammaa, thetaa) = Binomial_Tree_Pricing(amp, bmt, True)
+    print [peup, deltae, gammae, thetae]
+    print [pamp, deltaa, gammaa, thetaa]
     # pabt, Deltaabt, Gammaabt, Thetaabt = Avg_Binomial_Tree_Pricing(eup, bmt, True)
     # print pabt, Deltaabt, Gammaabt, Thetaabt
-    pbbs, Deltabbs, Gammabbs, Thetabbs = Binomial_Black_Scholes(amp, bmt, True)
-    print pbbs, Deltabbs, Gammabbs, Thetabbs
+    # pbbs, Deltabbs, Gammabbs, Thetabbs = Binomial_Black_Scholes(amp, bmt, True)
+    # print pbbs, Deltabbs, Gammabbs, Thetabbs
     # pbbsr = Binomial_Black_Scholes_Richardson(eup, bmt, False)
     # print pbbsr
