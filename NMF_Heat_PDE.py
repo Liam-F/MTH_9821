@@ -31,7 +31,7 @@ def PDE_Forward_Euler(x_left, x_right, tau_final, f, g_left, g_right, M, N):
     for c in xrange(N+1):
         u_approx[0, c] = f(x[c])
     u_approx[:, 0] = np.apply_along_axis(g_left, 0, tau)
-    u_approx[1:, N] = np.apply_along_axis(g_right, 0, tau[1:])
+    u_approx[:, N] = np.apply_along_axis(g_right, 0, tau)
 
     # Execute Forward Euler
     for m in xrange(1, M+1):
@@ -193,7 +193,8 @@ def PDE_Crank_Nicolson(x_left, x_right, tau_final, f, g_left, g_right, M, N, sol
             b[0] += (u_approx[m, 0] + u_approx[m - 1, 0]) * alpha / 2
             b[-1] += (u_approx[m, -1] + u_approx[m - 1, -1]) * alpha / 2
 
-            u_approx[m, 1:N] = np.reshape(its.SOR_iter(A, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri = 0, omega=1.2), N - 1)
+            u_approx[m, 1:N] = np.reshape(its.SOR_iter_banded(A, 2, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri=0, omega=1.2), N - 1)
+            # u_approx[m, 1:N] = np.reshape(its.SOR_iter(A, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri=0, omega=1.2), N - 1)
     return u_approx, x, tau
 
 def PDE_Crank_Nicolson_Amer(x_left, x_right, tau_final, f, g_left, g_right, M, N, opt, r, solver='SOR'):
@@ -221,7 +222,7 @@ def PDE_Crank_Nicolson_Amer(x_left, x_right, tau_final, f, g_left, g_right, M, N
     for c in xrange(N+1):
         u_approx[0, c] = f(x[c])
     u_approx[:, 0] = np.apply_along_axis(g_left, 0, tau)
-    u_approx[1:, N] = np.apply_along_axis(g_right, 0, tau[1:])
+    u_approx[:, N] = np.apply_along_axis(g_right, 0, tau)
 
     # Execute Crank Nicolson
     # Initialize the tri-diagonal matrix A

@@ -45,28 +45,27 @@ def boundry_config(opt, r):
             def f(x):
                 return K * np.exp(a * x) * (1 - np.exp(x)) * int(x < 0)
             def g_left(tau):
-                return 0
+                return 2 * np.exp(a * x_left + b * tau)
             def g_right(tau):
-                return 0
+                return 2 * np.exp(a * x_right + b * tau)
         elif opt.cp == "C":
             def f(x):
                 return K * np.exp(a * x) * (np.exp(x) - 1) * int(x > 0)
             def g_left(tau):
-                return 0
+                return 2 * np.exp(a * x_left + b * tau)
             def g_right(tau):
-                return 0
+                return 2 * np.exp(a * x_right + b * tau)
 
     return f, g_left, g_right
 
 
-def finite_diff(opt, r, M=64, PDE_Solver="Forward_Euler", Linear_Solver='LU', Greek=False, print_grid=False):
+def finite_diff(opt, r, M=64, alpha_temp=0.5, PDE_Solver="Forward_Euler", Linear_Solver='LU', Greek=False, print_grid=False):
 
     S0, K, T, q, sigma = opt.spot, opt.strike, opt.maturity, opt.div_rate, opt.vol
     a = (r - q) / sigma ** 2 - 1 / 2
     b = ((r - q) / sigma ** 2 + 1 / 2) ** 2 + 2 * q / sigma ** 2
     x_left, x_right, tau_final = Discretization(opt, r)
     f, g_left, g_right = boundry_config(opt, r)
-    alpha_temp = 0.5
     N, alpha = mesh(x_left, x_right, tau_final, M, alpha_temp)
     dtau = tau_final / M
     dx = (x_right - x_left) / N
@@ -86,9 +85,10 @@ def finite_diff(opt, r, M=64, PDE_Solver="Forward_Euler", Linear_Solver='LU', Gr
         elif Linear_Solver == 'LU':
             u_approx_grid, x_knot, tau_knot = pde.PDE_Crank_Nicolson(x_left, x_right, tau_final, f, g_left, g_right, M, N, solver='LU')
     if print_grid:
-        print u_approx_grid
+        print u_approx_grid[::-1,:]
     u_approx = u_approx_grid[-1, :]
-    print np.exp(-a * x_knot - b * tau_final) * u_approx
+    # print a, b
+    # print np.exp(-a * x_knot - b * tau_final) * u_approx
 
     def linear_interp_1(S0, K):
         x_compute = np.log(S0 / K)
