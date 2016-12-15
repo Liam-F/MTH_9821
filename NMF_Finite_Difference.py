@@ -95,7 +95,7 @@ def finite_diff(opt, r, M=64, PDE_Solver="Backward_Euler", Linear_Solver='LU', G
         elif Linear_Solver == 'LU':
             u_approx_grid, x_knot, tau_knot = pde.PDE_Crank_Nicolson(x_left, x_right, tau_final, f, g_left, g_right, M, N, solver='LU')
     if print_grid:
-        print u_approx_grid
+        print u_approx_grid[::-1,:]
     u_approx = u_approx_grid[-1, :]
 
     def linear_interp_1(S0, K):
@@ -181,7 +181,7 @@ def finite_diff_amer(opt, r, M=64, c=3, PDE_Solver="Backward_Euler", Linear_Solv
     elif PDE_Solver == "Crank_Nicolson":
         u_approx_grid, x_knot, tau_knot = pde.PDE_Crank_Nicolson_Amer(x_left, x_right, tau_final, f, g_left, g_right, M, N, opt, r, solver='SOR')
     if print_grid:
-        print u_approx_grid
+        print u_approx_grid[::-1,:]
     u_approx = u_approx_grid[-1, :]
 
     def linear_interp_1(S0, K):
@@ -249,7 +249,7 @@ def finite_diff_amer(opt, r, M=64, c=3, PDE_Solver="Backward_Euler", Linear_Solv
         V_hi_pre = np.exp(-a * x_hi - b * (tau_final - d_tau)) * u_approx_grid[-2, i + 1]
         V_FD_pre = (V_lo_pre * (S_hi - S0) + V_hi_pre * (S0 - S_lo)) / (S_hi - S_lo)
         Theta = (V_FD - V_FD_pre) / dt
-        print u_approx[i], u_approx[i + 1], V_FD,
+        # print u_approx[i], u_approx[i + 1], V_FD,
         return V_FD, Delta, Gamma, Theta
 
 if __name__ == "__main__":
