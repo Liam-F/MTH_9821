@@ -1,4 +1,3 @@
-import numpy as np
 # this python module is used for MTH 9821 Numerical Methods for Finance
 # Basic methods used in solving linear systems are defined in this file
 # backward_subst
@@ -19,6 +18,8 @@ import numpy as np
 # linear_solve_Cholesky
 # linear_solve_Cholesky_banded
 # Important! when initializing the matrix or vectors in this file, make sure that the data type is float not integer!
+from __future__ import division
+import numpy as np
 
 def backward_subst (U, b):
     # U is a non-singular upper triangular matrix

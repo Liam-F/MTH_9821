@@ -1,3 +1,4 @@
+#Monte Carlo Pricing for plain vanilla options
 from __future__ import division
 from Option import *
 import NMF_RND as rnd
@@ -5,16 +6,16 @@ import NMF_Black_Scholes as BS
 import numpy as np
 
 
-def Monte_Carlo_Plain_Vanilla(Op, r, n, Greek=False):
+def Monte_Carlo_Plain_Vanilla(Op, r, N, Greek=False):
     '''
     Return the result of Monte Carlo simulation of a plain vanilla European option
     :param Op: Option, should be European
     :param r: float, interest rate in unit
-    :param n: int, MC simulation steps
+    :param N: int, MC simulation steps
     :return: float, MC price and Greeks
     '''
     S0, K, sigma, T, q = Op.spot, Op.strike, Op.vol, Op.maturity, Op.div_rate
-    z = rnd.std_normal_inverse_transform(n)
+    z = rnd.std_normal_inverse_transform(N)
     S = [S0 * np.exp((r - q - sigma ** 2 / 2) * T + sigma * np.sqrt(T) * zi) for zi in z]  # MC final stock price
     if Op.cp == 'C':
         p_vec = [np.exp(-r * T) * max(Si - K, 0) for Si in S]

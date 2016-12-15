@@ -1,4 +1,5 @@
 # Pseudorandom number generators for MTH 9821 Numerical Methods for Finance
+# Used in Monte Carlo methods
 from __future__ import division
 import numpy as np
 import time

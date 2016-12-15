@@ -1,3 +1,5 @@
+# Linear regression methods
+# calculating covariance matrix
 from __future__ import division
 import numpy as np
 import NMF_linear_solve as LS

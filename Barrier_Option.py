@@ -1,3 +1,5 @@
+#Definition of a simple single barrier option class
+# currently contain only down and out options
 from __future__ import division
 from Option import *
 

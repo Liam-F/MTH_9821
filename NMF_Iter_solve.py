@@ -1,11 +1,12 @@
+from__future__ import division
 import numpy as np
 import math
 import NMF_linear_solve as nmfls
 '''
 This code contains Iterative solvers to linear systems for MTH 9821
 Jacobi
-Gauss-Siedel (banded)
-SOR (banded)
+Gauss-Siedel (banded variate)
+SOR (banded variate)
 '''
 
 
