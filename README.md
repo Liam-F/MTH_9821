@@ -36,7 +36,7 @@ All with banded variants
 #### Option and Barrier_Option
 Implementation of a basic option class and a barrier option class (derived from option class)
 
-## NMF_Black_Scholes
+#### NMF_Black_Scholes
 Price a plain vanilla European option with Black-Scholes formula and calculate Greeks
 
 #### Binomial Tree and Trinomial Tree
