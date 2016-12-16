@@ -47,6 +47,7 @@ NMF_Binomial_Tree, NMF_Fast_Binomial_Tree, NMF_Trinomial_Tree, NMF_Fast_Trinomia
 
 #### Monte Carlo methods
 NMF_RND is a pseudo random number generator for uniform random variables or normal random variables
+
 Use numpy.random module instead if able
 - Read Control_Variates.py to get an idea how this works, it is not well orgnized because of the assignment
 - NMF_Monte_Carlo contains a simple pricer for plain vanilla options
@@ -55,5 +56,7 @@ Use numpy.random module instead if able
 #### Finite Difference methods
 NMF_Heat_PDE is the solver of heat pde, it requires NMF_linear_solve and NMF_iter_solve to work
 - Includes Forward Euler(fast but not accurate), Backward Euler(balance speed and accuracy), and Crank-Nicolson(slow but accurate) methods to solve the heat pde numerically
+
 NMF_Finite_Difference is the option price solver, it requires NMF_Heat_PDE to work
+
 Has variants for barrier options and options paying discrete dividends
