@@ -249,7 +249,7 @@ def finite_diff_amer(opt, r, M=64, c=3, alpha_temp=0.5, PDE_Solver="Forward_Eule
         V_hi_pre = np.exp(-a * x_hi - b * (tau_final - d_tau)) * u_approx_grid[-2, i + 1]
         V_FD_pre = (V_lo_pre * (S_hi - S0) + V_hi_pre * (S0 - S_lo)) / (S_hi - S_lo)
         Theta = (V_FD - V_FD_pre) / dt
-        # print u_approx[i], u_approx[i + 1], V_FD,
+        print u_approx[i], u_approx[i + 1], V_FD,
         return V_FD, Delta, Gamma, Theta
 
 if __name__ == "__main__":

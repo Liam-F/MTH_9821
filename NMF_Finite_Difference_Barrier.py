@@ -85,9 +85,8 @@ def finite_diff(opt, r, M=64, alpha_temp=0.5, PDE_Solver="Forward_Euler", Linear
         elif Linear_Solver == 'LU':
             u_approx_grid, x_knot, tau_knot = pde.PDE_Crank_Nicolson(x_left, x_right, tau_final, f, g_left, g_right, M, N, solver='LU')
     if print_grid:
-        print u_approx_grid[::-1,:]
+        print u_approx_grid
     u_approx = u_approx_grid[-1, :]
-    # print a, b
     # print np.exp(-a * x_knot - b * tau_final) * u_approx
 
     def linear_interp_1(S0, K):

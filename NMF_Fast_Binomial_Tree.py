@@ -2,6 +2,7 @@ from __future__ import division
 import numpy as np
 from time import *
 from Option import *
+from copy import *
 
 class BinomialTree:
     def __init__(self, N, r, Op):
@@ -88,6 +89,36 @@ def Fast_Binomial_Tree_Pricing(Op, BMT, Greek=False):
         Gamma = ((fv2[0] - fv2[1]) / (fs2[0] - fs2[1]) - (fv2[1] - fv2[2]) / (fs2[1] - fs2[2])) / ((fs2[0] - fs2[2]) / 2)
         Theta = (fv2[1] - fv[0][0]) / (2 * dt)
         return (fv[0][0], Delta, Gamma, Theta)
+
+
+def implied_vol(opt, r, p_m, sigma_0, sigma_n1, tol=10 ** -4, N=2500):
+    '''
+    Compute the implied volatility with secant method on a binomial tree
+    :param opt: Option, whose implied vol need to be determined
+    :param sigma_0: initial_guess 0
+    :param sigma_n1: initial_guess -1
+    :param tol: tolerance of iteration
+    :param p_m: market price of the option
+    :param N: time step of the tree, default 2500
+    :return: the implied vol
+    '''
+    def f(sigma):
+        opt.vol = sigma
+        bmt = BinomialTree(N, r, opt)
+        p_sigma = Fast_Binomial_Tree_Pricing(opt, bmt)
+        return p_sigma - p_m
+
+    sigma_old, sigma_new = sigma_n1, sigma_0
+    ic = 0
+    while abs(sigma_new - sigma_old) > tol:
+        sigma_oldest = sigma_old
+        sigma_old = sigma_new
+        sigma_new = sigma_old - f(sigma_old) * (sigma_old - sigma_oldest) / (f(sigma_old) - f(sigma_oldest))
+        ic += 1
+        print ic, sigma_new
+    # print "ic=", ic
+    return sigma_new
+
 
 if __name__ == "__main__":
     start = time()

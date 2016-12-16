@@ -6,6 +6,23 @@ from Heat_PDE_settings import *
 from time import *
 np.set_printoptions(precision=12, linewidth=300)
 
+def proj_SOR(alpha, A, b, x0, tol, omega, res_cri = 1, show_ic = False):
+    N_entry = len(x0)
+    x = x0.copy()
+    r = b - np.dot(A, x0)
+    nr0 = its.norm(r)
+    r_cri = 1
+    while(r_cri > tol):
+        prevx = x.copy()
+        for j in xrange(N_entry):
+            x[j] = (1 - omega) * x[j] + omega * alpha / (2 * (1 + alpha)) * (x[j - 1] + x[j + 1]) + omega / (1 + alpha) * b[j]
+        r = b - np.dot(A, x)
+        r_cri = its.norm(r) / nr0
+        if res_cri != 1:
+            r_cri = its.norm(x - prevx)
+    return x
+
+
 def PDE_Forward_Euler(x_left, x_right, tau_final, f, g_left, g_right, M, N):
     '''
     Forward Euler solution for heat pde u_tau = u_xx
@@ -79,7 +96,7 @@ def PDE_Forward_Euler_Amer(x_left, x_right, tau_final, f, g_left, g_right, M, N,
                 early_ex_premium = K * np.exp(a * x_n + b * tau_m) * max(1 - np.exp(x_n), 0)
             else:
                 early_ex_premium = K * np.exp(a * x_n + b * tau_m) * max(np.exp(x_n) - 1, 0)
-            u_approx[m, n] = max(u_approx[m, n], early_ex_premium)
+            u_approx[m, n] = np.maximum(u_approx[m, n], early_ex_premium)
     return u_approx, x, tau
 
 
@@ -240,23 +257,34 @@ def PDE_Crank_Nicolson_Amer(x_left, x_right, tau_final, f, g_left, g_right, M, N
     #Projected SOR
     if solver == 'SOR':
         for m in xrange(1, M + 1):
-            b = np.dot(B, np.reshape(u_approx[m - 1, 1:N], (N - 1, 1)))
-            b[0] += (u_approx[m, 0] + u_approx[m - 1, 0]) * alpha / 2
-            b[-1] += (u_approx[m, -1] + u_approx[m - 1, -1]) * alpha / 2
+            b_vec = np.dot(B, np.reshape(u_approx[m - 1, 1:N], (N - 1, 1)))
+            b_vec[0] += (u_approx[m, 0] + u_approx[m - 1, 0]) * alpha / 2
+            b_vec[-1] += (u_approx[m, -1] + u_approx[m - 1, -1]) * alpha / 2
+            # u_approx[m, 1:N] = np.reshape(its.SOR_iter_banded(A, 2, b_vec, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri=0, omega=1.2), N - 1)
+            # u_approx[m, 1:N] = np.reshape(its.SOR_iter(A, b_vec, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri=0, omega=1.2), N - 1)
+            # u_approx[m, 1:N] = np.reshape(proj_SOR(alpha, A, b_vec, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri=0, omega=1.2), N - 1)
+            tol = 10**(-8)
+            omega = 1.2
+            a = (r - q) / sigma ** 2 - 1 / 2
+            b = ((r - q) / sigma ** 2 + 1 / 2) ** 2 + 2 * q / sigma ** 2
+            tau_m = m * dtau
+            res = 1
+            u_approx[m, 1:N] = np.array(
+                [K * np.exp(a * (x_left + n * dx) + b * tau_m) * max(np.exp(x_left + n * dx) - 1, 0) for n in
+                 xrange(1, N)])
+            while (res > tol):
+                for n in xrange(1, N):
+                    x_n = x_left + n * dx
+                    if opt.cp == "P":
+                        early_ex_premium = K * np.exp(a * x_n + b * tau_m) * max(1 - np.exp(x_n), 0)
+                    else:
+                        early_ex_premium = K * np.exp(a * x_n + b * tau_m) * max(np.exp(x_n) - 1, 0)
 
-            # u_approx[m, 1:N] = np.reshape(its.SOR_iter_banded(A, 2, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-6), omega=1.2), N - 1)
-            u_approx[m, 1:N] = np.reshape(its.SOR_iter(A, b, np.reshape(u_approx[m-1, 1:N], (N-1, 1)), tol=10 ** (-8), res_cri = 0, omega=1.2), N - 1)
-            for n in xrange(N):
-                a = (r - q) / sigma ** 2 - 1 / 2
-                b = ((r - q) / sigma ** 2 + 1 / 2) ** 2 + 2 * q / sigma ** 2
-                tau_m = m * dtau
-                x_n = x_left + n * dx
-                if opt.cp == "P":
-                    early_ex_premium = K * np.exp(a * x_n + b * tau_m) * max(1 - np.exp(x_n), 0)
-                else:
-                    early_ex_premium = K * np.exp(a * x_n + b * tau_m) * max(np.exp(x_n) - 1, 0)
-                # print early_ex_premium
-                u_approx[m, n] = max(u_approx[m, n], early_ex_premium)
+                    u_approx[m, n] = (1 - omega) * u_approx[m, n] + omega * alpha / (2 * (1 + alpha)) * (u_approx[m, n-1] + u_approx[m, n+1]) + omega / (1 + alpha) * b_vec[n - 1]
+                    u_approx[m, n] = np.maximum(u_approx[m, n], early_ex_premium)
+                u_old = u_approx[m, 1:N].copy()
+                res = its.norm(u_approx[m, 1:N] - u_old)
+
     return u_approx, x, tau
 
 
