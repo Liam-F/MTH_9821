@@ -33,6 +33,8 @@ Iterative methods to solve linear system
 - Successive over relaxation(SOR)
 All with banded variants
 
+### Option and Option pricing
+
 #### Option and Barrier_Option
 Implementation of a basic option class and a barrier option class (derived from option class)
 
