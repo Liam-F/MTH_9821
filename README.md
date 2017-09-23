@@ -3,10 +3,8 @@ Baruch MFE MTH 9821 Numerical Methods for Finance
 
 Copyright 2016 @ Yuchen Qi, All rights reserved
 
-Thanks to professor Dan Stefanica and teaching assistant Kris Joanidis who designed all the course material and assignments.
-
 ## Getting started
-- Python 2.7 interpreter, if you wish to use Python 3.0, you only have to change only the print commands which are everywhere in this repo.
+- Python 2.7 interpreter, if you wish to use Python 3.0 or above, you only have to change all the print commands which are everywhere in this repo.
 - Numpy package with version 1.11.0 or above is a must
 - Scipy package is used to generate normal cdf
 
